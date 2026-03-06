@@ -1,6 +1,6 @@
 import { Form, Input, Button, Card, Typography, App } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { useState } from 'react';
 import { apiClient } from '../api/client';
@@ -95,6 +95,15 @@ export default function Login() {
                         </Button>
                     </Form.Item>
                 </Form>
+
+                <div className="text-center mt-4">
+                    <Link
+                        to="/forgot-password"
+                        className="text-slate-500 hover:text-slate-700 text-sm inline-block"
+                    >
+                        Forgot Password?
+                    </Link>
+                </div>
             </Card>
         </div>
     );

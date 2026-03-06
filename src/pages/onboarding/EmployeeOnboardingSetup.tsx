@@ -14,17 +14,16 @@ export default function EmployeeOnboardingSetup() {
     const navigate = useNavigate();
     const { user, login, accessToken, refreshToken } = useAuthStore();
 
+    const [aadhaarFile, setAadhaarFile] = useState<any>(null);
+    const [panFile, setPanFile] = useState<any>(null);
+
     // Step 1: Change Password
     const handlePasswordSubmit = async (values: any) => {
         setLoading(true);
         try {
-            // NOTE: Replace this endpoint with the actual backend password change API once implemented 
             await apiClient.post('/auth/change-password', {
                 oldPassword: values.oldPassword,
                 newPassword: values.newPassword
-            }).catch(() => {
-                // Mock success if endpoint doesn't exist yet for demonstration
-                console.warn('Password reset endpoint might not exist yet, mocking success.');
             });
 
             message.success('Password updated successfully!');
@@ -38,21 +37,35 @@ export default function EmployeeOnboardingSetup() {
 
     // Step 2: Upload Documents
     const handleDocumentSubmit = async () => {
+        if (!aadhaarFile && !panFile) {
+            message.warning('Please select at least one document to upload.');
+            return;
+        }
+
         setLoading(true);
         try {
-            // Collect files from upload components here
-            // const formData = new FormData();
-            // formData.append('aadhaar', aadhaarFile);
-            // formData.append('pan', panFile);
-            // await apiClient.post('/employees/me/documents', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+            // Upload Aadhaar if present
+            if (aadhaarFile) {
+                const formData = new FormData();
+                formData.append('file', aadhaarFile);
+                formData.append('type', 'AADHAAR_CARD');
+                await apiClient.post('/employees/me/documents', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
 
-            // Mock success for now
-            await new Promise(r => setTimeout(r, 1500));
+            // Upload PAN if present
+            if (panFile) {
+                const formData = new FormData();
+                formData.append('file', panFile);
+                formData.append('type', 'PAN_CARD');
+                await apiClient.post('/employees/me/documents', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
 
             // Final step: update the user's requiresOnboarding flag to false in the backend
-            await apiClient.patch(`/employees/${user?.id}/onboarding-complete`).catch(() => {
-                console.warn('Onboarding complete endpoint missing, mocking success');
-            });
+            await apiClient.patch(`/employees/${user?.id}/onboarding-complete`);
 
             // Update local store so the guard lets them into the dashboard
             if (user && accessToken && refreshToken) {
@@ -61,6 +74,7 @@ export default function EmployeeOnboardingSetup() {
 
             setCurrentStep(2);
         } catch (error) {
+            console.error('Document upload error:', error);
             message.error('Failed to upload documents');
         } finally {
             setLoading(false);
@@ -146,7 +160,15 @@ export default function EmployeeOnboardingSetup() {
                                         <div className="font-medium text-slate-800">Aadhaar Card</div>
                                         <div className="text-xs text-slate-500">Front and back (PDF or Image)</div>
                                     </div>
-                                    <Upload maxCount={1} beforeUpload={() => false}>
+                                    <Upload
+                                        maxCount={1}
+                                        beforeUpload={(file) => {
+                                            setAadhaarFile(file);
+                                            return false;
+                                        }}
+                                        onRemove={() => setAadhaarFile(null)}
+                                        fileList={aadhaarFile ? [aadhaarFile] : []}
+                                    >
                                         <Button icon={<UploadOutlined />}>Select File</Button>
                                     </Upload>
                                 </div>
@@ -155,7 +177,15 @@ export default function EmployeeOnboardingSetup() {
                                         <div className="font-medium text-slate-800">PAN Card</div>
                                         <div className="text-xs text-slate-500">Front side only (PDF or Image)</div>
                                     </div>
-                                    <Upload maxCount={1} beforeUpload={() => false}>
+                                    <Upload
+                                        maxCount={1}
+                                        beforeUpload={(file) => {
+                                            setPanFile(file);
+                                            return false;
+                                        }}
+                                        onRemove={() => setPanFile(null)}
+                                        fileList={panFile ? [panFile] : []}
+                                    >
                                         <Button icon={<UploadOutlined />}>Select File</Button>
                                     </Upload>
                                 </div>

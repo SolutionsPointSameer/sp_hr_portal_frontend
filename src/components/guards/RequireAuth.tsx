@@ -9,9 +9,8 @@ export const RequireAuth = () => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // If the user requires onboarding and they try to go anywhere else, redirect them
-    if (user.requiresOnboarding && location.pathname !== '/onboarding-setup') {
-        return <Navigate to="/onboarding-setup" replace />;
+    if (user.requiresOnboarding && !location.pathname.startsWith('/onboarding')) {
+        return <Navigate to="/onboarding" replace />;
     }
 
     return <Outlet />;

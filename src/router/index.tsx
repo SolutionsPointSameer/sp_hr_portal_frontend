@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { RequireAuth } from '../components/guards/RequireAuth';
 import { RequireRole } from '../components/guards/RequireRole';
-import { RequireOnboarding } from '../components/guards/RequireOnboarding';
 import { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -15,16 +14,22 @@ const EmployeeForm = lazy(() => import('../pages/employees/EmployeeForm'));
 const MyAttendance = lazy(() => import('../pages/attendance/MyAttendance'));
 const TeamAttendance = lazy(() => import('../pages/attendance/TeamAttendance'));
 const MyLeave = lazy(() => import('../pages/leave/MyLeave'));
+const TeamLeaves = lazy(() => import('../pages/leave/TeamLeaves'));
 const PendingApprovals = lazy(() => import('../pages/leave/PendingApprovals'));
 const LeaveCalendar = lazy(() => import('../pages/leave/LeaveCalendar'));
-const MyPayslips = lazy(() => import('../pages/payroll/MyPayslips'));
-const PayrollRuns = lazy(() => import('../pages/payroll/PayrollRuns'));
-const OnboardingTasks = lazy(() => import('../pages/onboarding/OnboardingTasks'));
-const EmployeeOnboardingSetup = lazy(() => import('../pages/onboarding/EmployeeOnboardingSetup'));
 const Reports = lazy(() => import('../pages/reports/Reports'));
+const OrgChart = lazy(() => import('../pages/employees/OrgChart'));
 const UserManagement = lazy(() => import('../pages/admin/UserManagement'));
 const SystemSettings = lazy(() => import('../pages/admin/SystemSettings'));
 const MasterDataManagement = lazy(() => import('../pages/admin/MasterDataManagement'));
+
+// Forgot Password
+const ForgotPassword = lazy(() => import('../pages/forgotPassword/ForgotPassword'));
+const ForgotPasswordVerify = lazy(() => import('../pages/forgotPassword/ForgotPasswordVerify'));
+const ForgotPasswordReset = lazy(() => import('../pages/forgotPassword/ForgotPasswordReset'));
+
+// Onboarding
+const EmployeeOnboardingSetup = lazy(() => import('../pages/onboarding/EmployeeOnboardingSetup'));
 
 export const router = createBrowserRouter([
     {
@@ -32,16 +37,24 @@ export const router = createBrowserRouter([
         element: <Login />,
     },
     {
+        path: '/forgot-password',
+        element: <ForgotPassword />,
+    },
+    {
+        path: '/forgot-password/verify',
+        element: <ForgotPasswordVerify />,
+    },
+    {
+        path: '/forgot-password/reset',
+        element: <ForgotPasswordReset />,
+    },
+    {
         path: '/',
         element: <RequireAuth />, // Protect all child routes
         children: [
             {
-                path: 'onboarding-setup',
-                element: (
-                    <RequireOnboarding>
-                        <EmployeeOnboardingSetup />
-                    </RequireOnboarding>
-                ),
+                path: 'onboarding',
+                element: <EmployeeOnboardingSetup />
             },
             {
                 path: '/',
@@ -61,6 +74,7 @@ export const router = createBrowserRouter([
                         children: [
                             { path: '', element: <RequireRole roles={['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeList /> }] },
                             { path: 'new', element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeForm /> }] },
+                            { path: 'org-chart', element: <OrgChart /> },
                             { path: ':id', element: <EmployeeDetail /> },
                             { path: ':id/edit', element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeForm /> }] },
                         ]
@@ -84,30 +98,18 @@ export const router = createBrowserRouter([
                             { path: 'mine', element: <MyLeave /> },
                             { path: 'calendar', element: <LeaveCalendar /> },
                             {
+                                path: 'team',
+                                element: <RequireRole roles={['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN']} />,
+                                children: [{ path: '', element: <TeamLeaves /> }]
+                            },
+                            {
                                 path: 'approvals',
                                 element: <RequireRole roles={['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN']} />,
                                 children: [{ path: '', element: <PendingApprovals /> }]
                             },
                         ]
                     },
-                    // Payroll Routes
-                    {
-                        path: 'payroll',
-                        children: [
-                            { path: 'my-payslips', element: <MyPayslips /> },
-                            {
-                                path: 'runs',
-                                element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />,
-                                children: [{ path: '', element: <PayrollRuns /> }]
-                            },
-                        ]
-                    },
                     // Admin & HR Routes
-                    {
-                        path: 'onboarding',
-                        element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />,
-                        children: [{ path: '', element: <OnboardingTasks /> }]
-                    },
                     {
                         path: 'reports',
                         element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />,

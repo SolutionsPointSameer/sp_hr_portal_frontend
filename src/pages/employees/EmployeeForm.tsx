@@ -1,8 +1,9 @@
 import { Form, Input, Button, Card, Typography, Select, DatePicker, Row, Col, message, Spin } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '../../store/auth.store';
 import { apiClient } from '../../api/client';
 import dayjs from 'dayjs';
 
@@ -14,6 +15,9 @@ export default function EmployeeForm() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const queryClient = useQueryClient();
+    const user = useAuthStore(state => state.user);
+
+    const canManageSalary = user?.role === 'SUPER_ADMIN' || user?.role === 'HR_ADMIN';
 
     // If id is 'new', we are creating. Otherwise editing.
     const isEditing = !!id && id !== 'new';
@@ -26,6 +30,24 @@ export default function EmployeeForm() {
         queryKey: ['departments'],
         queryFn: async () => {
             const res = await apiClient.get('/departments');
+            return res.data;
+        }
+    });
+
+    // Fetch Locations
+    const { data: locations, isLoading: isLoadingLocations } = useQuery({
+        queryKey: ['locations'],
+        queryFn: async () => {
+            const res = await apiClient.get('/locations');
+            return res.data;
+        }
+    });
+
+    // Fetch Companies
+    const { data: companies, isLoading: isLoadingCompanies } = useQuery({
+        queryKey: ['companies'],
+        queryFn: async () => {
+            const res = await apiClient.get('/companies');
             return res.data;
         }
     });
@@ -124,7 +146,7 @@ export default function EmployeeForm() {
                 </div>
             </div>
 
-            <Card bordered={false} className="shadow-sm max-w-4xl">
+            <Card bordered={false} className="shadow-sm">
                 <div className="mb-6">
                     <Text className="text-slate-500">Fill in the employee details below. All fields with * are required.</Text>
                 </div>
@@ -134,6 +156,7 @@ export default function EmployeeForm() {
                     layout="vertical"
                     onFinish={onFinish}
                 >
+                    {/* Personal Info */}
                     <Row gutter={24}>
                         <Col xs={24} sm={12}>
                             <Form.Item name="firstName" label="First Name" rules={[{ required: true }]}>
@@ -160,21 +183,34 @@ export default function EmployeeForm() {
                         </Col>
                     </Row>
 
-                    <Row gutter={24}>
-                        <Col xs={24} sm={12}>
-                            <Form.Item name="employeeCode" label="Employee Code" rules={[{ required: true }]}>
-                                <Input placeholder="EMP001" className="bg-white border-slate-200 text-slate-900" disabled={isEditing} />
-                            </Form.Item>
-                        </Col>
-                        {!isEditing && (
+                    {!isEditing && (
+                        <Row gutter={24}>
                             <Col xs={24} sm={12}>
                                 <Form.Item name="password" label="Temporary Password" rules={[{ required: true, min: 6 }]}>
                                     <Input.Password placeholder="Min 6 characters" className="bg-white border-slate-200 text-slate-900" />
                                 </Form.Item>
                             </Col>
-                        )}
+                            <Col xs={24} sm={12} />
+                        </Row>
+                    )}
+                    <Row gutter={24}>
+                        <Col xs={24} sm={12}>
+                            <Form.Item name="companyId" label="Company" rules={[{ required: true }]}>
+                                <Select placeholder="Select company" loading={isLoadingCompanies} className="bg-white">
+                                    {companies?.map((c: any) => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={12}>
+                            <Form.Item name="locationId" label="Location" rules={[{ required: true }]}>
+                                <Select placeholder="Select location" loading={isLoadingLocations} className="bg-white">
+                                    {locations?.map((l: any) => <Option key={l.id} value={l.id}>{l.name}</Option>)}
+                                </Select>
+                            </Form.Item>
+                        </Col>
                     </Row>
 
+                    {/* Department, Designation, Manager */}
                     <Row gutter={24}>
                         <Col xs={24} sm={8}>
                             <Form.Item name="departmentId" label="Department" rules={[{ required: true }]}>
@@ -182,7 +218,7 @@ export default function EmployeeForm() {
                                     placeholder="Select department"
                                     className="bg-white"
                                     loading={isLoadingDepts}
-                                    onChange={() => form.setFieldValue('designationId', undefined)} // Reset designation when department changes
+                                    onChange={() => form.setFieldValue('designationId', undefined)}
                                 >
                                     {departments?.map((d: any) => (
                                         <Option key={d.id} value={d.id}>{d.name}</Option>
@@ -213,7 +249,6 @@ export default function EmployeeForm() {
                                     allowClear
                                 >
                                     {managers?.map((m: any) => (
-                                        // Don't let an employee be their own manager
                                         m.id !== id && <Option key={m.id} value={m.id}>{m.firstName} {m.lastName} ({m.employeeCode})</Option>
                                     ))}
                                 </Select>
@@ -221,6 +256,7 @@ export default function EmployeeForm() {
                         </Col>
                     </Row>
 
+                    {/* Role, Type, Status, Joining Date */}
                     <Row gutter={24}>
                         <Col xs={24} sm={6}>
                             <Form.Item name="role" label="Role" rules={[{ required: true }]}>
@@ -257,6 +293,22 @@ export default function EmployeeForm() {
                             </Form.Item>
                         </Col>
                     </Row>
+
+                    {/* Salary - Admin only */}
+                    {canManageSalary && (
+                        <Row gutter={24}>
+                            <Col xs={24} sm={12}>
+                                <Form.Item name="ctc" label="CTC (Monthly)">
+                                    <Input type="number" placeholder="e.g. 500000" className="bg-white border-slate-200 text-slate-900" />
+                                </Form.Item>
+                            </Col>
+                            <Col xs={24} sm={12}>
+                                <Form.Item name="inHandSalary" label="In-Hand Salary (Monthly)">
+                                    <Input type="number" placeholder="e.g. 40000" className="bg-white border-slate-200 text-slate-900" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    )}
 
                     <div className="flex justify-end gap-4 mt-6">
                         <Button onClick={() => navigate('/employees')} className="bg-slate-100 border-none text-slate-900 hover:bg-slate-200">

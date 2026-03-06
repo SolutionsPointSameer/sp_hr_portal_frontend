@@ -9,7 +9,6 @@ import {
     TeamOutlined,
     CalendarOutlined,
     FileDoneOutlined,
-    BankOutlined,
     SettingOutlined,
     UserOutlined,
     LogoutOutlined,
@@ -60,9 +59,13 @@ export const AppLayout = () => {
 
         if (user?.role && ['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
             items.push({
-                key: '/employees',
+                key: 'employees-group',
                 icon: <TeamOutlined />,
                 label: 'Employees',
+                children: [
+                    { key: '/employees', label: 'Employee List' },
+                    { key: '/employees/org-chart', label: 'Org Chart' },
+                ],
             });
         }
 
@@ -86,30 +89,16 @@ export const AppLayout = () => {
                 { key: '/leave/mine', label: 'My Leave' },
                 { key: '/leave/calendar', label: 'Leave Calendar' },
                 ...(user?.role && ['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'].includes(user.role)
-                    ? [{ key: '/leave/approvals', label: 'Pending Approvals' }]
-                    : []),
-            ],
-        });
-
-        items.push({
-            key: 'payroll',
-            icon: <BankOutlined />,
-            label: 'Payroll',
-            children: [
-                { key: '/payroll/my-payslips', label: 'My Payslips' },
-                ...(user?.role && ['HR_ADMIN', 'SUPER_ADMIN'].includes(user.role)
-                    ? [{ key: '/payroll/runs', label: 'Payroll Runs' }]
+                    ? [
+                        { key: '/leave/team', label: 'Team Leaves' },
+                        { key: '/leave/approvals', label: 'Pending Approvals' }
+                    ]
                     : []),
             ],
         });
 
         // Special items for Admins
         if (user?.role && ['HR_ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
-            items.push({
-                key: '/onboarding',
-                icon: <UserOutlined />,
-                label: 'Onboarding',
-            });
             items.push({
                 key: '/reports',
                 icon: <BarChartOutlined />,
@@ -135,21 +124,21 @@ export const AppLayout = () => {
 
     // Find the selected key based on the current location
     const getSelectedKeys = () => {
-        const selectedKey = location.pathname;
-
-        // For nested routes, we might need to handle exact match or prefix
-        if (selectedKey.startsWith('/employees/')) return ['/employees'];
-
-        return [selectedKey];
+        const path = location.pathname;
+        // Org chart has its own exact key
+        if (path === '/employees/org-chart') return ['/employees/org-chart'];
+        // Any other /employees/* sub-route highlights the list
+        if (path.startsWith('/employees')) return ['/employees'];
+        return [path];
     };
 
     const getOpenKeys = () => {
-        // Open submenus based on path
         const path = location.pathname;
-        const parts = path.split('/').filter(Boolean);
-        if (parts.length > 1) {
-            return [parts[0]];
-        }
+        // Map path prefixes to their parent submenu keys
+        if (path.startsWith('/employees')) return ['employees-group'];
+        if (path.startsWith('/attendance')) return ['attendance'];
+        if (path.startsWith('/leave')) return ['leave'];
+        if (path.startsWith('/admin')) return ['admin'];
         return [];
     };
 

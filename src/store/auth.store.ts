@@ -8,7 +8,7 @@ export interface User {
     lastName: string;
     email: string;
     employeeCode: string;
-    requiresOnboarding?: boolean;
+    requiresOnboarding: boolean;
 }
 
 interface AuthState {
@@ -16,6 +16,7 @@ interface AuthState {
     accessToken: string | null;
     refreshToken: string | null;
     login: (user: User, accessToken: string, refreshToken: string) => void;
+    updateUser: (userUpdates: Partial<User>) => void;
     logout: () => void;
 }
 
@@ -26,6 +27,9 @@ export const useAuthStore = create<AuthState>()(
             accessToken: null,
             refreshToken: null,
             login: (user, accessToken, refreshToken) => set({ user, accessToken, refreshToken }),
+            updateUser: (userUpdates) => set((state) => ({
+                user: state.user ? { ...state.user, ...userUpdates } : null
+            })),
             logout: () => set({ user: null, accessToken: null, refreshToken: null }),
         }),
         {

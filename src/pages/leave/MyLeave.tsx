@@ -16,7 +16,7 @@ export default function MyLeave() {
     const queryClient = useQueryClient();
 
     // Fetch Leave Balances
-    const { data: balances, isLoading: isLoadingBalances } = useQuery({
+    const { data: balances } = useQuery({
         queryKey: ['leave', 'balances'],
         queryFn: async () => {
             const res = await apiClient.get('/leave/my-balances');

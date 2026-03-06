@@ -1,10 +1,25 @@
 import { Typography, Card, Button, Table, Calendar, Tag, Row, Col, message } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ClockCircleOutlined, InfoCircleOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+
+// Helper: get current geolocation as a Promise — throws if denied
+function getGeolocation(): Promise<{ latitude: number; longitude: number }> {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocation is not supported by your browser.'));
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+            () => reject(new Error('Location access is required to check in/out. Please enable location permissions and try again.')),
+            { timeout: 8000 }
+        );
+    });
+}
 
 export default function MyAttendance() {
     const queryClient = useQueryClient();
@@ -18,35 +33,35 @@ export default function MyAttendance() {
         }
     });
 
-    // Check In Mutation
+    // Check In Mutation — sends lat/lng if available
     const checkInMutation = useMutation({
         mutationFn: async () => {
-            const res = await apiClient.post('/attendance/check-in');
+            const coords = await getGeolocation();
+            const res = await apiClient.post('/attendance/check-in', coords);
             return res.data;
         },
         onSuccess: () => {
             message.success('Checked in successfully');
             queryClient.invalidateQueries({ queryKey: ['attendance', 'mine'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
         onError: (error: any) => {
-            message.error(error.response?.data?.message || 'Check-in failed');
+            message.error(error.response?.data?.message || error.message || 'Check-in failed');
         }
     });
 
-    // Check Out Mutation
+    // Check Out Mutation — sends lat/lng if available
     const checkOutMutation = useMutation({
         mutationFn: async () => {
-            const res = await apiClient.post('/attendance/check-out');
+            const coords = await getGeolocation();
+            const res = await apiClient.post('/attendance/check-out', coords);
             return res.data;
         },
         onSuccess: () => {
             message.success('Checked out successfully');
             queryClient.invalidateQueries({ queryKey: ['attendance', 'mine'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
         onError: (error: any) => {
-            message.error(error.response?.data?.message || 'Check-out failed');
+            message.error(error.response?.data?.message || error.message || 'Check-out failed');
         }
     });
 
@@ -57,35 +72,48 @@ export default function MyAttendance() {
     const checkedIn = !!todayRecord?.checkIn;
     const checkedOut = !!todayRecord?.checkOut;
     const checkInTime = todayRecord?.checkIn ? dayjs(todayRecord.checkIn).format('hh:mm A') : null;
-
-    const handleCheckIn = () => {
-        checkInMutation.mutate();
-    };
-
-    const handleCheckOut = () => {
-        checkOutMutation.mutate();
-    };
+    const checkOutTime = todayRecord?.checkOut ? dayjs(todayRecord.checkOut).format('hh:mm A') : null;
 
     const columns = [
         {
             title: 'Date',
             dataIndex: 'date',
             key: 'date',
-            render: (text: string) => dayjs(text).format('YYYY-MM-DD')
+            render: (text: string) => dayjs(text).format('DD MMM YYYY')
         },
         {
             title: 'Check In',
-            dataIndex: 'checkIn',
             key: 'checkIn',
-            className: 'font-mono text-slate-600',
-            render: (text: string) => text ? dayjs(text).format('hh:mm A') : '-'
+            render: (_: any, record: any) => (
+                <div>
+                    <div className="font-mono text-slate-700">
+                        {record.checkIn ? dayjs(record.checkIn).format('hh:mm A') : '-'}
+                    </div>
+                    {record.checkInAddress && (
+                        <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                            <EnvironmentOutlined />
+                            <span className="truncate max-w-[180px]">{record.checkInAddress}</span>
+                        </div>
+                    )}
+                </div>
+            )
         },
         {
             title: 'Check Out',
-            dataIndex: 'checkOut',
             key: 'checkOut',
-            className: 'font-mono text-slate-600',
-            render: (text: string) => text ? dayjs(text).format('hh:mm A') : '-'
+            render: (_: any, record: any) => (
+                <div>
+                    <div className="font-mono text-slate-700">
+                        {record.checkOut ? dayjs(record.checkOut).format('hh:mm A') : '-'}
+                    </div>
+                    {record.checkOutAddress && (
+                        <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                            <EnvironmentOutlined />
+                            <span className="truncate max-w-[180px]">{record.checkOutAddress}</span>
+                        </div>
+                    )}
+                </div>
+            )
         },
         {
             title: 'Status',
@@ -102,7 +130,6 @@ export default function MyAttendance() {
         }
     ];
 
-    // Note: We might want a custom dateCellRender for Calendar later, but keeping it simple for now
     const dateCellRender = (value: dayjs.Dayjs) => {
         const dateStr = value.format('YYYY-MM-DD');
         const record = attendanceData?.find((r: any) => dayjs(r.date).format('YYYY-MM-DD') === dateStr);
@@ -112,6 +139,7 @@ export default function MyAttendance() {
                     {record.status === 'present' && <div className="text-green-500 font-medium">Present</div>}
                     {record.status === 'absent' && <div className="text-red-500 font-medium">Absent</div>}
                     {record.status === 'on_leave' && <div className="text-blue-500 font-medium">Leave</div>}
+                    {record.status === 'late' && <div className="text-amber-500 font-medium">Late</div>}
                 </div>
             );
         }
@@ -134,13 +162,14 @@ export default function MyAttendance() {
                             <div className="text-4xl font-light text-slate-900 tracking-widest font-mono">
                                 {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
+
                             <div className="flex gap-4 w-full">
                                 <Button
                                     type="primary"
                                     size="large"
                                     icon={<CheckCircleOutlined />}
                                     className={`flex-1 ${checkedIn ? 'bg-green-600 hover:bg-green-500' : 'bg-brand-red hover:bg-red-600'}`}
-                                    onClick={handleCheckIn}
+                                    onClick={() => checkInMutation.mutate()}
                                     disabled={checkedIn}
                                     loading={checkInMutation.isPending}
                                 >
@@ -151,17 +180,45 @@ export default function MyAttendance() {
                                     size="large"
                                     icon={<ClockCircleOutlined />}
                                     className="flex-1 bg-slate-100 text-slate-900 border-slate-300 hover:text-brand-red hover:border-brand-red disabled:opacity-50"
-                                    onClick={handleCheckOut}
+                                    onClick={() => checkOutMutation.mutate()}
                                     disabled={!checkedIn || checkedOut}
                                     loading={checkOutMutation.isPending}
                                 >
                                     Check Out
                                 </Button>
                             </div>
-                            {checkedIn && !checkedOut && (
-                                <Text type="success" className="flex items-center gap-2">
-                                    <InfoCircleOutlined /> You are currently checked in since {checkInTime}
-                                </Text>
+
+                            {/* Check-in status & location */}
+                            {checkedIn && (
+                                <div className="flex flex-col items-center gap-2 w-full">
+                                    <Text type="success" className="flex items-center gap-2 text-sm">
+                                        <InfoCircleOutlined />
+                                        {checkedOut
+                                            ? `In ${checkInTime}  ·  Out ${checkOutTime}`
+                                            : `Checked in at ${checkInTime}`
+                                        }
+                                    </Text>
+
+                                    {todayRecord?.checkInAddress && (
+                                        <div className="w-full bg-slate-50 rounded-lg px-3 py-2 text-left">
+                                            <div className="text-xs font-medium text-slate-400 mb-0.5">Check-In Location</div>
+                                            <div className="flex items-start gap-1.5 text-xs text-slate-600">
+                                                <EnvironmentOutlined className="text-green-500 mt-0.5 flex-shrink-0" />
+                                                <span>{todayRecord.checkInAddress}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {todayRecord?.checkOutAddress && (
+                                        <div className="w-full bg-slate-50 rounded-lg px-3 py-2 text-left">
+                                            <div className="text-xs font-medium text-slate-400 mb-0.5">Check-Out Location</div>
+                                            <div className="flex items-start gap-1.5 text-xs text-slate-600">
+                                                <EnvironmentOutlined className="text-red-400 mt-0.5 flex-shrink-0" />
+                                                <span>{todayRecord.checkOutAddress}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </Card>

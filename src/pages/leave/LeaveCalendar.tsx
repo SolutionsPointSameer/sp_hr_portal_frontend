@@ -1,41 +1,85 @@
-import { Typography, Card, Calendar, Badge } from 'antd';
+import { Typography, Card, Calendar, Badge, Spin, Select } from 'antd';
 import type { Dayjs } from 'dayjs';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../../api/client';
+import { useAuthStore } from '../../store/auth.store';
+import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
+
+dayjs.extend(isBetween);
 
 const { Title, Text } = Typography;
 
+// Status badge type mapping
+const statusBadge: Record<string, 'success' | 'warning' | 'error' | 'processing'> = {
+    APPROVED: 'success',
+    PENDING: 'warning',
+    REJECTED: 'error',
+};
+
 export default function LeaveCalendar() {
-    const getListData = (value: Dayjs) => {
-        let listData;
-        switch (value.date()) {
-            case 8:
-                listData = [
-                    { type: 'warning', content: 'John Doe (Sick)' },
-                    { type: 'success', content: 'Jane Smith (Annual)' },
-                ];
-                break;
-            case 10:
-                listData = [
-                    { type: 'warning', content: 'Mike Jones (Sick)' },
-                ];
-                break;
-            case 15:
-                listData = [
-                    { type: 'error', content: 'Company Holiday' },
-                ];
-                break;
-            default:
+    const user = useAuthStore(state => state.user);
+    const isAdmin = user?.role === 'HR_ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'MANAGER';
+    const [viewMode, setViewMode] = useState<'mine' | 'team'>('mine');
+
+    // Fetch my leaves
+    const { data: myLeaves = [], isLoading: isLoadingMine } = useQuery({
+        queryKey: ['leave', 'mine'],
+        queryFn: async () => {
+            const res = await apiClient.get('/leave/mine');
+            return res.data || [];
+        },
+    });
+
+    // Fetch all team leaves (only for managers/admins)
+    const { data: teamLeaves = [], isLoading: isLoadingTeam } = useQuery({
+        queryKey: ['leave', 'all'],
+        queryFn: async () => {
+            const res = await apiClient.get('/leave/all');
+            return res.data?.data || res.data || [];
+        },
+        enabled: isAdmin,
+    });
+
+    const activeLeaves = viewMode === 'mine' ? myLeaves : teamLeaves;
+    const isLoading = viewMode === 'mine' ? isLoadingMine : isLoadingTeam;
+
+    // Build a map of date → leave items for efficient lookup
+    const leaveDateMap: Record<string, { label: string; status: string }[]> = {};
+
+    (activeLeaves as any[]).forEach((leave: any) => {
+        if (!leave.fromDate || !leave.toDate) return;
+        const from = dayjs(leave.fromDate);
+        const to = dayjs(leave.toDate);
+        let curr = from;
+
+        const name = leave.employee
+            ? `${leave.employee.firstName} ${leave.employee.lastName}`
+            : 'Me';
+        const leaveTypeName = leave.leaveType?.name || 'Leave';
+        const label = `${name} (${leaveTypeName})`;
+
+        while (curr.isBefore(to) || curr.isSame(to, 'day')) {
+            const key = curr.format('YYYY-MM-DD');
+            if (!leaveDateMap[key]) leaveDateMap[key] = [];
+            leaveDateMap[key].push({ label, status: leave.status });
+            curr = curr.add(1, 'day');
         }
-        return listData || [];
-    };
+    });
 
     const dateCellRender = (value: Dayjs) => {
-        const listData = getListData(value);
+        const key = value.format('YYYY-MM-DD');
+        const items = leaveDateMap[key] || [];
         return (
             <ul className="m-0 p-0 list-none">
-                {listData.map((item) => (
-                    <li key={item.content} className="text-xs truncate text-left mb-1">
-                        <Badge status={item.type as any} text={<span className="text-slate-600">{item.content}</span>} />
+                {items.map((item, i) => (
+                    <li key={i} className="text-xs truncate text-left mb-1">
+                        <Badge
+                            status={statusBadge[item.status] || 'default'}
+                            text={<span className="text-slate-600">{item.label}</span>}
+                        />
                     </li>
                 ))}
             </ul>
@@ -52,13 +96,37 @@ export default function LeaveCalendar() {
             <div className="flex justify-between items-center sm:flex-row flex-col gap-4">
                 <div>
                     <Title level={3} className="!mb-1">Leave Calendar</Title>
-                    <Text className="text-slate-500">View team availability and company holidays.</Text>
+                    <Text className="text-slate-500">View approved and pending leaves.</Text>
                 </div>
+                {isAdmin && (
+                    <Select
+                        value={viewMode}
+                        onChange={setViewMode}
+                        className="w-40"
+                        options={[
+                            { label: 'My Leaves', value: 'mine' },
+                            { label: 'Team Leaves', value: 'team' },
+                        ]}
+                    />
+                )}
             </div>
 
             <Card bordered={false} className="shadow-sm attendance-calendar overflow-x-auto min-w-[600px]">
-                <Calendar cellRender={cellRender} className="bg-transparent" />
+                {isLoading ? (
+                    <div className="flex justify-center py-16">
+                        <Spin size="large" />
+                    </div>
+                ) : (
+                    <Calendar cellRender={cellRender} className="bg-transparent" />
+                )}
             </Card>
+
+            {/* Legend */}
+            <div className="flex gap-4 text-sm text-slate-500">
+                <span><Badge status="success" /> Approved</span>
+                <span><Badge status="warning" /> Pending</span>
+                <span><Badge status="error" /> Rejected</span>
+            </div>
         </div>
     );
 }

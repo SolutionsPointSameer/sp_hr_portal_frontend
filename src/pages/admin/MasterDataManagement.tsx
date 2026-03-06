@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
     Typography, Card, Table, Button, Tabs, Modal, Form,
-    Input, InputNumber, Select, message, Spin, Space, Popconfirm
+    Input, InputNumber, Select, message, Space
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { apiClient } from '../../api/client';
 
 const { Title, Text } = Typography;
@@ -21,20 +21,40 @@ interface Designation {
     department?: Department;
 }
 
+interface Company {
+    id: string;
+    name: string;
+}
+
+interface Location {
+    id: string;
+    name: string;
+}
+
 export default function MasterDataManagement() {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [designations, setDesignations] = useState<Designation[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [locations, setLocations] = useState<Location[]>([]);
     const [loadingDeps, setLoadingDeps] = useState(false);
     const [loadingDesigs, setLoadingDesigs] = useState(false);
+    const [loadingCompanies, setLoadingCompanies] = useState(false);
+    const [loadingLocations, setLoadingLocations] = useState(false);
 
     // Modal states
     const [isDepModalOpen, setIsDepModalOpen] = useState(false);
     const [isDesigModalOpen, setIsDesigModalOpen] = useState(false);
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+    const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
     const [editingDep, setEditingDep] = useState<Department | null>(null);
     const [editingDesig, setEditingDesig] = useState<Designation | null>(null);
+    const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+    const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
     const [depForm] = Form.useForm();
     const [desigForm] = Form.useForm();
+    const [companyForm] = Form.useForm();
+    const [locationForm] = Form.useForm();
 
     const fetchDepartments = async () => {
         setLoadingDeps(true);
@@ -60,9 +80,35 @@ export default function MasterDataManagement() {
         }
     };
 
+    const fetchCompanies = async () => {
+        setLoadingCompanies(true);
+        try {
+            const res = await apiClient.get('/companies');
+            setCompanies(res.data);
+        } catch (error) {
+            message.error('Failed to load companies');
+        } finally {
+            setLoadingCompanies(false);
+        }
+    };
+
+    const fetchLocations = async () => {
+        setLoadingLocations(true);
+        try {
+            const res = await apiClient.get('/locations');
+            setLocations(res.data);
+        } catch (error) {
+            message.error('Failed to load locations');
+        } finally {
+            setLoadingLocations(false);
+        }
+    };
+
     useEffect(() => {
         fetchDepartments();
         fetchDesignations();
+        fetchCompanies();
+        fetchLocations();
     }, []);
 
     // Department Handlers
@@ -119,6 +165,56 @@ export default function MasterDataManagement() {
         setIsDesigModalOpen(true);
     };
 
+    // Company Handlers
+    const handleCompanySubmit = async (values: any) => {
+        try {
+            if (editingCompany) {
+                await apiClient.patch(`/companies/${editingCompany.id}`, values);
+                message.success('Company updated successfully');
+            } else {
+                await apiClient.post('/companies', values);
+                message.success('Company added successfully');
+            }
+            setIsCompanyModalOpen(false);
+            companyForm.resetFields();
+            setEditingCompany(null);
+            fetchCompanies();
+        } catch (error: any) {
+            message.error(error.response?.data?.error || 'Failed to save company');
+        }
+    };
+
+    const openEditCompanyModal = (record: Company) => {
+        setEditingCompany(record);
+        companyForm.setFieldsValue({ name: record.name });
+        setIsCompanyModalOpen(true);
+    };
+
+    // Location Handlers
+    const handleLocationSubmit = async (values: any) => {
+        try {
+            if (editingLocation) {
+                await apiClient.patch(`/locations/${editingLocation.id}`, values);
+                message.success('Location updated successfully');
+            } else {
+                await apiClient.post('/locations', values);
+                message.success('Location added successfully');
+            }
+            setIsLocationModalOpen(false);
+            locationForm.resetFields();
+            setEditingLocation(null);
+            fetchLocations();
+        } catch (error: any) {
+            message.error(error.response?.data?.error || 'Failed to save location');
+        }
+    };
+
+    const openEditLocationModal = (record: Location) => {
+        setEditingLocation(record);
+        locationForm.setFieldsValue({ name: record.name });
+        setIsLocationModalOpen(true);
+    };
+
     const depColumns = [
         { title: 'Department Name', dataIndex: 'name', key: 'name', className: 'font-medium' },
         {
@@ -157,6 +253,46 @@ export default function MasterDataManagement() {
                         size="small"
                         icon={<EditOutlined />}
                         onClick={() => openEditDesigModal(record)}
+                    >
+                        Edit
+                    </Button>
+                </Space>
+            )
+        }
+    ];
+
+    const companyColumns = [
+        { title: 'Company Name', dataIndex: 'name', key: 'name', className: 'font-medium' },
+        {
+            title: 'Actions',
+            key: 'actions',
+            width: 150,
+            render: (_: any, record: Company) => (
+                <Space>
+                    <Button
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => openEditCompanyModal(record)}
+                    >
+                        Edit
+                    </Button>
+                </Space>
+            )
+        }
+    ];
+
+    const locationColumns = [
+        { title: 'Location Name', dataIndex: 'name', key: 'name', className: 'font-medium' },
+        {
+            title: 'Actions',
+            key: 'actions',
+            width: 150,
+            render: (_: any, record: Location) => (
+                <Space>
+                    <Button
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => openEditLocationModal(record)}
                     >
                         Edit
                     </Button>
@@ -222,6 +358,54 @@ export default function MasterDataManagement() {
                             dataSource={designations}
                             rowKey="id"
                             loading={loadingDesigs}
+                            pagination={false}
+                            className="custom-table border border-slate-200 rounded-lg"
+                        />
+                    </Tabs.TabPane>
+
+                    <Tabs.TabPane tab="Companies" key="companies">
+                        <div className="flex justify-end mb-4">
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => {
+                                    setEditingCompany(null);
+                                    companyForm.resetFields();
+                                    setIsCompanyModalOpen(true);
+                                }}
+                            >
+                                Add Company
+                            </Button>
+                        </div>
+                        <Table
+                            columns={companyColumns}
+                            dataSource={companies}
+                            rowKey="id"
+                            loading={loadingCompanies}
+                            pagination={false}
+                            className="custom-table border border-slate-200 rounded-lg"
+                        />
+                    </Tabs.TabPane>
+
+                    <Tabs.TabPane tab="Locations" key="locations">
+                        <div className="flex justify-end mb-4">
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => {
+                                    setEditingLocation(null);
+                                    locationForm.resetFields();
+                                    setIsLocationModalOpen(true);
+                                }}
+                            >
+                                Add Location
+                            </Button>
+                        </div>
+                        <Table
+                            columns={locationColumns}
+                            dataSource={locations}
+                            rowKey="id"
+                            loading={loadingLocations}
                             pagination={false}
                             className="custom-table border border-slate-200 rounded-lg"
                         />
@@ -296,6 +480,60 @@ export default function MasterDataManagement() {
                     </Form.Item>
                     <div className="flex justify-end gap-2 mt-6">
                         <Button onClick={() => setIsDesigModalOpen(false)}>Cancel</Button>
+                        <Button type="primary" htmlType="submit">Save</Button>
+                    </div>
+                </Form>
+            </Modal>
+
+            {/* Company Modal */}
+            <Modal
+                title={editingCompany ? "Edit Company" : "Add New Company"}
+                open={isCompanyModalOpen}
+                onCancel={() => setIsCompanyModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={companyForm}
+                    layout="vertical"
+                    onFinish={handleCompanySubmit}
+                    className="mt-4"
+                >
+                    <Form.Item
+                        name="name"
+                        label="Company Name"
+                        rules={[{ required: true, message: 'Please enter company name' }]}
+                    >
+                        <Input placeholder="e.g. Acme Corp" />
+                    </Form.Item>
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button onClick={() => setIsCompanyModalOpen(false)}>Cancel</Button>
+                        <Button type="primary" htmlType="submit">Save</Button>
+                    </div>
+                </Form>
+            </Modal>
+
+            {/* Location Modal */}
+            <Modal
+                title={editingLocation ? "Edit Location" : "Add New Location"}
+                open={isLocationModalOpen}
+                onCancel={() => setIsLocationModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={locationForm}
+                    layout="vertical"
+                    onFinish={handleLocationSubmit}
+                    className="mt-4"
+                >
+                    <Form.Item
+                        name="name"
+                        label="Location Name"
+                        rules={[{ required: true, message: 'Please enter location name' }]}
+                    >
+                        <Input placeholder="e.g. New York, NY" />
+                    </Form.Item>
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button onClick={() => setIsLocationModalOpen(false)}>Cancel</Button>
                         <Button type="primary" htmlType="submit">Save</Button>
                     </div>
                 </Form>

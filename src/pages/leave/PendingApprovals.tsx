@@ -26,7 +26,7 @@ export default function PendingApprovals() {
             const res = await apiClient.patch(`/leave/${id}/decide`, { status });
             return res.data;
         },
-        onSuccess: (data, variables) => {
+        onSuccess: (_, variables) => {
             message.success(`Leave request ${variables.status.toLowerCase()} successfully`);
             queryClient.invalidateQueries({ queryKey: ['leave', 'pending-approvals'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });

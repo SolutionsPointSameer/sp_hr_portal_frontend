@@ -47,6 +47,16 @@ export default function EmployeeList() {
             render: (_: any, record: any) => `${record.firstName} ${record.lastName}`,
         },
         {
+            title: 'Company',
+            key: 'company',
+            render: (_: any, record: any) => record.company?.name || '-',
+        },
+        {
+            title: 'Location',
+            key: 'location',
+            render: (_: any, record: any) => record.location?.name || '-',
+        },
+        {
             title: 'Department',
             key: 'department',
             render: (_: any, record: any) => record.department?.name || '-',
@@ -91,7 +101,8 @@ export default function EmployeeList() {
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center sm:flex-row flex-col gap-4">
                 <div>
-                    <Title level={3} className="!mb-1">Employees directory</Title>
+                    <Title level={3} className="!mb-1">Employee Directory</Title>
+                    <span className="text-slate-500 text-sm">Manage and view all employees in your organisation.</span>
                 </div>
                 {(user?.role === 'HR_ADMIN' || user?.role === 'SUPER_ADMIN') && (
                     <Button

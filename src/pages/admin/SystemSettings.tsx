@@ -8,9 +8,8 @@ const { Option } = Select;
 export default function SystemSettings() {
     const [form] = Form.useForm();
 
-    const onFinish = (values: any) => {
-        console.log('Settings:', values);
-        message.success('System settings updated successfully.');
+    const onFinish = () => {
+        message.success('Settings updated successfully');
     };
 
     return (

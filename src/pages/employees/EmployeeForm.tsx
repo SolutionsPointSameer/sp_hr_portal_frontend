@@ -10,6 +10,11 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+const employeeCategoryOptions = [
+    { value: 'DIRECT', label: 'Direct Employee' },
+    { value: 'DEPLOYED_MANPOWER', label: 'Payroll Employee Supplied to Client' },
+];
+
 export default function EmployeeForm() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -24,6 +29,7 @@ export default function EmployeeForm() {
 
     // Watch department to filter designations
     const selectedDepartmentId = Form.useWatch('departmentId', form);
+    const selectedEmployeeCategory = Form.useWatch('employeeCategory', form);
 
     // Fetch Departments
     const { data: departments, isLoading: isLoadingDepts } = useQuery({
@@ -91,6 +97,7 @@ export default function EmployeeForm() {
             });
         } else if (!isEditing) {
             form.setFieldsValue({
+                employeeCategory: 'DIRECT',
                 status: 'ACTIVE',
                 employmentType: 'FULL_TIME'
             });
@@ -101,6 +108,7 @@ export default function EmployeeForm() {
         mutationFn: async (values: any) => {
             const payload = {
                 ...values,
+                companyId: values.employeeCategory === 'DIRECT' ? undefined : values.companyId,
                 dateOfJoining: values.dateOfJoining ? values.dateOfJoining.format('YYYY-MM-DD') : undefined,
             };
 
@@ -195,12 +203,32 @@ export default function EmployeeForm() {
                     )}
                     <Row gutter={24}>
                         <Col xs={24} sm={12}>
-                            <Form.Item name="companyId" label="Company" rules={[{ required: true }]}>
-                                <Select placeholder="Select company" loading={isLoadingCompanies} className="bg-white">
-                                    {companies?.map((c: any) => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                            <Form.Item name="employeeCategory" label="Employee Category" rules={[{ required: true }]}>
+                                <Select placeholder="Select employee category" className="bg-white">
+                                    {employeeCategoryOptions.map(option => (
+                                        <Option key={option.value} value={option.value}>{option.label}</Option>
+                                    ))}
                                 </Select>
                             </Form.Item>
                         </Col>
+                        {selectedEmployeeCategory === 'DIRECT' ? (
+                            <Col xs={24} sm={12}>
+                                <Form.Item label="Company">
+                                    <Input value="SP Solutions Point" disabled className="bg-slate-50 border-slate-200 text-slate-500" />
+                                </Form.Item>
+                            </Col>
+                        ) : (
+                            <Col xs={24} sm={12}>
+                                <Form.Item name="companyId" label="Client Company" rules={[{ required: true, message: 'Client company is required' }]}>
+                                    <Select placeholder="Select client company" loading={isLoadingCompanies} className="bg-white">
+                                        {companies?.map((c: any) => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        )}
+                    </Row>
+
+                    <Row gutter={24}>
                         <Col xs={24} sm={12}>
                             <Form.Item name="locationId" label="Location" rules={[{ required: true }]}>
                                 <Select placeholder="Select location" loading={isLoadingLocations} className="bg-white">
@@ -208,6 +236,13 @@ export default function EmployeeForm() {
                                 </Select>
                             </Form.Item>
                         </Col>
+                            <Col xs={24} sm={12}>
+                                <div className="pt-8 text-sm text-slate-500">
+                                    {selectedEmployeeCategory === 'DEPLOYED_MANPOWER'
+                                        ? 'Select the client company where this payroll employee is deployed.'
+                                        : 'Direct employees are automatically assigned to SP Solutions Point.'}
+                                </div>
+                            </Col>
                     </Row>
 
                     {/* Department, Designation, Manager */}
@@ -241,7 +276,11 @@ export default function EmployeeForm() {
                             </Form.Item>
                         </Col>
                         <Col xs={24} sm={8}>
-                            <Form.Item name="managerId" label="Reporting Manager">
+                            <Form.Item
+                                name="managerId"
+                                label="Reporting Manager"
+                                rules={[{ required: true, message: 'Reporting manager is required' }]}
+                            >
                                 <Select
                                     placeholder="Select manager"
                                     className="bg-white"
@@ -272,7 +311,6 @@ export default function EmployeeForm() {
                             <Form.Item name="employmentType" label="Employment Type" rules={[{ required: true }]}>
                                 <Select className="bg-white">
                                     <Option value="FULL_TIME">Full Time</Option>
-                                    <Option value="PART_TIME">Part Time</Option>
                                     <Option value="CONTRACT">Contract</Option>
                                     <Option value="INTERN">Intern</Option>
                                 </Select>

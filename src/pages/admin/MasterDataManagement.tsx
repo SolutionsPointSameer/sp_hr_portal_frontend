@@ -301,240 +301,279 @@ export default function MasterDataManagement() {
         }
     ];
 
+    const tabItems = [
+        {
+            key: 'departments',
+            label: 'Departments',
+            children: (
+                <Card bordered={false} className="shadow-none p-0">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <Title level={4} className="!mb-0">Departments</Title>
+                            <Text className="text-slate-400 text-xs">Total {departments.length} departments recorded</Text>
+                        </div>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                                setEditingDep(null);
+                                depForm.resetFields();
+                                setIsDepModalOpen(true);
+                            }}
+                            className="bg-[#e00c05] hover:bg-[#c00a04]"
+                        >
+                            Add New
+                        </Button>
+                    </div>
+                    <Table
+                        columns={depColumns}
+                        dataSource={departments}
+                        rowKey="id"
+                        loading={loadingDeps}
+                        pagination={{ pageSize: 10, size: 'small' }}
+                        className="custom-table"
+                    />
+                </Card>
+            )
+        },
+        {
+            key: 'designations',
+            label: 'Designations',
+            children: (
+                <Card bordered={false} className="shadow-none p-0">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <Title level={4} className="!mb-0">Designations</Title>
+                            <Text className="text-slate-400 text-xs">Total {designations.length} designations recorded</Text>
+                        </div>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                                setEditingDesig(null);
+                                desigForm.resetFields();
+                                setIsDesigModalOpen(true);
+                            }}
+                            className="bg-[#e00c05] hover:bg-[#c00a04]"
+                        >
+                            Add New
+                        </Button>
+                    </div>
+                    <Table
+                        columns={desigColumns}
+                        dataSource={designations}
+                        rowKey="id"
+                        loading={loadingDesigs}
+                        pagination={{ pageSize: 10, size: 'small' }}
+                        className="custom-table"
+                    />
+                </Card>
+            )
+        },
+        {
+            key: 'companies',
+            label: 'Companies',
+            children: (
+                <Card bordered={false} className="shadow-none p-0">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <Title level={4} className="!mb-0">Companies</Title>
+                            <Text className="text-slate-400 text-xs">Total {companies.length} companies recorded</Text>
+                        </div>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                                setEditingCompany(null);
+                                companyForm.resetFields();
+                                setIsCompanyModalOpen(true);
+                            }}
+                            className="bg-[#e00c05] hover:bg-[#c00a04]"
+                        >
+                            Add New
+                        </Button>
+                    </div>
+                    <Table
+                        columns={companyColumns}
+                        dataSource={companies}
+                        rowKey="id"
+                        loading={loadingCompanies}
+                        pagination={{ pageSize: 10, size: 'small' }}
+                        className="custom-table"
+                    />
+                </Card>
+            )
+        },
+        {
+            key: 'locations',
+            label: 'Locations',
+            children: (
+                <Card bordered={false} className="shadow-none p-0">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <Title level={4} className="!mb-0">Locations</Title>
+                            <Text className="text-slate-400 text-xs">Total {locations.length} locations recorded</Text>
+                        </div>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                                setEditingLocation(null);
+                                locationForm.resetFields();
+                                setIsLocationModalOpen(true);
+                            }}
+                            className="bg-[#e00c05] hover:bg-[#c00a04]"
+                        >
+                            Add New
+                        </Button>
+                    </div>
+                    <Table
+                        columns={locationColumns}
+                        dataSource={locations}
+                        rowKey="id"
+                        loading={loadingLocations}
+                        pagination={{ pageSize: 10, size: 'small' }}
+                        className="custom-table"
+                    />
+                </Card>
+            )
+        }
+    ];
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center sm:flex-row flex-col gap-4">
+        <div className="p-4 sm:p-8 space-y-8 animate-fade-in max-w-[1400px] mx-auto">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Title level={3} className="!mb-1">Master Data Management</Title>
-                    <Text className="text-slate-500">Manage foundational entities like Departments and Designations.</Text>
+                    <Title level={2} className="!mb-1 page-heading" style={{ color: '#26428b' }}>
+                        Master Data Management
+                    </Title>
+                    <Text className="text-slate-500">Configure foundational entities like departments, designations, and locations.</Text>
                 </div>
             </div>
 
-            <Card bordered={false} className="shadow-sm p-0 overflow-hidden">
+            <Card 
+                className="shadow-xl border-slate-100 rounded-2xl overflow-hidden" 
+                style={{ borderRadius: '16px', boxShadow: '0 20px 50px -12px rgba(38, 66, 139, 0.08)' }}
+                bodyStyle={{ padding: '0' }}
+            >
                 <Tabs
                     defaultActiveKey="departments"
-                    className="master-data-tabs px-6 py-2"
-                >
-                    <Tabs.TabPane tab="Departments" key="departments">
-                        <div className="flex justify-end mb-4">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => {
-                                    setEditingDep(null);
-                                    depForm.resetFields();
-                                    setIsDepModalOpen(true);
-                                }}
-                            >
-                                Add Department
-                            </Button>
-                        </div>
-                        <Table
-                            columns={depColumns}
-                            dataSource={departments}
-                            rowKey="id"
-                            loading={loadingDeps}
-                            pagination={false}
-                            className="custom-table border border-slate-200 rounded-lg"
-                        />
-                    </Tabs.TabPane>
-
-                    <Tabs.TabPane tab="Designations" key="designations">
-                        <div className="flex justify-end mb-4">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => {
-                                    setEditingDesig(null);
-                                    desigForm.resetFields();
-                                    setIsDesigModalOpen(true);
-                                }}
-                            >
-                                Add Designation
-                            </Button>
-                        </div>
-                        <Table
-                            columns={desigColumns}
-                            dataSource={designations}
-                            rowKey="id"
-                            loading={loadingDesigs}
-                            pagination={false}
-                            className="custom-table border border-slate-200 rounded-lg"
-                        />
-                    </Tabs.TabPane>
-
-                    <Tabs.TabPane tab="Companies" key="companies">
-                        <div className="flex justify-end mb-4">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => {
-                                    setEditingCompany(null);
-                                    companyForm.resetFields();
-                                    setIsCompanyModalOpen(true);
-                                }}
-                            >
-                                Add Company
-                            </Button>
-                        </div>
-                        <Table
-                            columns={companyColumns}
-                            dataSource={companies}
-                            rowKey="id"
-                            loading={loadingCompanies}
-                            pagination={false}
-                            className="custom-table border border-slate-200 rounded-lg"
-                        />
-                    </Tabs.TabPane>
-
-                    <Tabs.TabPane tab="Locations" key="locations">
-                        <div className="flex justify-end mb-4">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => {
-                                    setEditingLocation(null);
-                                    locationForm.resetFields();
-                                    setIsLocationModalOpen(true);
-                                }}
-                            >
-                                Add Location
-                            </Button>
-                        </div>
-                        <Table
-                            columns={locationColumns}
-                            dataSource={locations}
-                            rowKey="id"
-                            loading={loadingLocations}
-                            pagination={false}
-                            className="custom-table border border-slate-200 rounded-lg"
-                        />
-                    </Tabs.TabPane>
-                </Tabs>
+                    className="master-data-tabs"
+                    items={tabItems}
+                />
             </Card>
 
-            {/* Department Modal */}
+            {/* Modals */}
             <Modal
                 title={editingDep ? "Edit Department" : "Add New Department"}
                 open={isDepModalOpen}
                 onCancel={() => setIsDepModalOpen(false)}
                 footer={null}
+                className="custom-modal"
+                styles={{ mask: { backdropFilter: 'blur(4px)' } }}
             >
-                <Form
-                    form={depForm}
-                    layout="vertical"
-                    onFinish={handleDepSubmit}
-                    className="mt-4"
-                >
+                <Form form={depForm} layout="vertical" onFinish={handleDepSubmit} className="mt-4" size="large">
                     <Form.Item
                         name="name"
-                        label="Department Name"
+                        label={<span className="text-slate-600 font-medium">Department Name</span>}
                         rules={[{ required: true, message: 'Please enter department name' }]}
                     >
-                        <Input placeholder="e.g. Engineering" />
+                        <Input placeholder="e.g. Engineering" className="!rounded-xl" />
                     </Form.Item>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button onClick={() => setIsDepModalOpen(false)}>Cancel</Button>
-                        <Button type="primary" htmlType="submit">Save</Button>
+                    <div className="flex justify-end gap-3 mt-8">
+                        <Button onClick={() => setIsDepModalOpen(false)} className="!rounded-xl h-11 px-6">Cancel</Button>
+                        <Button type="primary" htmlType="submit" className="!rounded-xl h-11 px-8 bg-[#e00c05]">Save Changes</Button>
                     </div>
                 </Form>
             </Modal>
 
-            {/* Designation Modal */}
             <Modal
                 title={editingDesig ? "Edit Designation" : "Add New Designation"}
                 open={isDesigModalOpen}
                 onCancel={() => setIsDesigModalOpen(false)}
                 footer={null}
+                className="custom-modal"
+                styles={{ mask: { backdropFilter: 'blur(4px)' } }}
             >
-                <Form
-                    form={desigForm}
-                    layout="vertical"
-                    onFinish={handleDesigSubmit}
-                    className="mt-4"
-                >
+                <Form form={desigForm} layout="vertical" onFinish={handleDesigSubmit} className="mt-4" size="large">
                     <Form.Item
                         name="name"
-                        label="Designation Title"
+                        label={<span className="text-slate-600 font-medium">Designation Title</span>}
                         rules={[{ required: true, message: 'Please enter title' }]}
                     >
-                        <Input placeholder="e.g. Software Engineer" />
+                        <Input placeholder="e.g. Software Engineer" className="!rounded-xl" />
                     </Form.Item>
-                    <Form.Item
-                        name="level"
-                        label="Job Level"
-                        rules={[{ required: true, message: 'Please enter a level' }]}
-                    >
-                        <InputNumber className="w-full" min={1} max={10} placeholder="1-10" />
-                    </Form.Item>
-                    <Form.Item
-                        name="departmentId"
-                        label="Department"
-                        rules={[{ required: true, message: 'Please select a department' }]}
-                    >
-                        <Select
-                            placeholder="Select Department"
-                            loading={loadingDeps}
-                            options={departments.map(d => ({ label: d.name, value: d.id }))}
-                        />
-                    </Form.Item>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button onClick={() => setIsDesigModalOpen(false)}>Cancel</Button>
-                        <Button type="primary" htmlType="submit">Save</Button>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Form.Item
+                            name="level"
+                            label={<span className="text-slate-600 font-medium">Job Level</span>}
+                            rules={[{ required: true, message: 'Please enter level' }]}
+                        >
+                            <InputNumber className="w-full !rounded-xl" min={1} max={10} placeholder="1-10" />
+                        </Form.Item>
+                        <Form.Item
+                            name="departmentId"
+                            label={<span className="text-slate-600 font-medium">Department</span>}
+                            rules={[{ required: true, message: 'Select department' }]}
+                        >
+                            <Select
+                                placeholder="Select"
+                                className="!rounded-xl"
+                                loading={loadingDeps}
+                                options={departments.map(d => ({ label: d.name, value: d.id }))}
+                            />
+                        </Form.Item>
+                    </div>
+                    <div className="flex justify-end gap-3 mt-8">
+                        <Button onClick={() => setIsDesigModalOpen(false)} className="!rounded-xl h-11 px-6">Cancel</Button>
+                        <Button type="primary" htmlType="submit" className="!rounded-xl h-11 px-8 bg-[#e00c05]">Save Changes</Button>
                     </div>
                 </Form>
             </Modal>
 
-            {/* Company Modal */}
             <Modal
                 title={editingCompany ? "Edit Company" : "Add New Company"}
                 open={isCompanyModalOpen}
                 onCancel={() => setIsCompanyModalOpen(false)}
                 footer={null}
+                className="custom-modal"
+                styles={{ mask: { backdropFilter: 'blur(4px)' } }}
             >
-                <Form
-                    form={companyForm}
-                    layout="vertical"
-                    onFinish={handleCompanySubmit}
-                    className="mt-4"
-                >
+                <Form form={companyForm} layout="vertical" onFinish={handleCompanySubmit} className="mt-4" size="large">
                     <Form.Item
                         name="name"
-                        label="Company Name"
+                        label={<span className="text-slate-600 font-medium">Company Name</span>}
                         rules={[{ required: true, message: 'Please enter company name' }]}
                     >
-                        <Input placeholder="e.g. Acme Corp" />
+                        <Input placeholder="e.g. Acme Corp" className="!rounded-xl" />
                     </Form.Item>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button onClick={() => setIsCompanyModalOpen(false)}>Cancel</Button>
-                        <Button type="primary" htmlType="submit">Save</Button>
+                    <div className="flex justify-end gap-3 mt-8">
+                        <Button onClick={() => setIsCompanyModalOpen(false)} className="!rounded-xl h-11 px-6">Cancel</Button>
+                        <Button type="primary" htmlType="submit" className="!rounded-xl h-11 px-8 bg-[#e00c05]">Save Changes</Button>
                     </div>
                 </Form>
             </Modal>
 
-            {/* Location Modal */}
             <Modal
                 title={editingLocation ? "Edit Location" : "Add New Location"}
                 open={isLocationModalOpen}
                 onCancel={() => setIsLocationModalOpen(false)}
                 footer={null}
+                className="custom-modal"
+                styles={{ mask: { backdropFilter: 'blur(4px)' } }}
             >
-                <Form
-                    form={locationForm}
-                    layout="vertical"
-                    onFinish={handleLocationSubmit}
-                    className="mt-4"
-                >
+                <Form form={locationForm} layout="vertical" onFinish={handleLocationSubmit} className="mt-4" size="large">
                     <Form.Item
                         name="name"
-                        label="Location Name"
+                        label={<span className="text-slate-600 font-medium">Location Name</span>}
                         rules={[{ required: true, message: 'Please enter location name' }]}
                     >
-                        <Input placeholder="e.g. New York, NY" />
+                        <Input placeholder="e.g. New York, NY" className="!rounded-xl" />
                     </Form.Item>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button onClick={() => setIsLocationModalOpen(false)}>Cancel</Button>
-                        <Button type="primary" htmlType="submit">Save</Button>
+                    <div className="flex justify-end gap-3 mt-8">
+                        <Button onClick={() => setIsLocationModalOpen(false)} className="!rounded-xl h-11 px-6">Cancel</Button>
+                        <Button type="primary" htmlType="submit" className="!rounded-xl h-11 px-8 bg-[#e00c05]">Save Changes</Button>
                     </div>
                 </Form>
             </Modal>

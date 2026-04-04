@@ -1,5 +1,5 @@
 import { Typography, Card, Tabs, Button, Select, Row, Col, Statistic, Spin, Table, Tag } from 'antd';
-import { DownloadOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined, DollarOutlined } from '@ant-design/icons';
+import { DownloadOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined, DollarOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/auth.store';
@@ -52,81 +52,93 @@ export default function Reports() {
         new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
 
     const operations = (
-        <div className="flex gap-2">
-            <Button icon={<DownloadOutlined />} size="small" className="text-slate-600 border-slate-300 hover:text-slate-900">PDF</Button>
-            <Button icon={<DownloadOutlined />} size="small" className="text-slate-600 border-slate-300 hover:text-slate-900">CSV</Button>
+        <div className="flex gap-2 mr-6">
+            <Button icon={<DownloadOutlined />} size="small" className="!rounded-lg text-slate-600 border-slate-200">Export PDF</Button>
+            <Button icon={<DownloadOutlined />} size="small" className="!rounded-lg text-slate-600 border-slate-200">CSV</Button>
         </div>
     );
 
-    const ReportPlaceholder = ({ title, icon, value, desc, loading }: { title: string, icon: React.ReactNode, value: string | number, desc: string, loading: boolean }) => (
-        <div className="p-8 flex flex-col items-center justify-center min-h-[400px] border border-dashed border-slate-200 rounded-lg bg-slate-50/50 relative">
-            {loading && <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10"><Spin /></div>}
-            <div className="text-5xl text-slate-600 mb-6">{icon}</div>
-            <Row gutter={[32, 32]} className="w-full max-w-2xl text-center flex items-center justify-center">
-                <Col span={12}>
-                    <Statistic title={<span className="text-slate-500">{title}</span>} value={value} valueStyle={{ color: '#E00C05', fontSize: '36px', fontWeight: 'bold' }} />
-                    <Text className="text-slate-500 mt-2 block">{desc}</Text>
-                </Col>
-            </Row>
-            <div className="mt-12 text-slate-500 italic flex flex-col items-center">
-                <p>Chart renders automatically with real data fetched from the API.</p>
-                <div className="flex gap-2 mt-4">
-                    <Select defaultValue="all" className="w-40 bg-white" size="small">
-                        <Option value="all">All Departments</Option>
+    const ReportPlaceholder = ({ title, icon, value, desc, loading, trend }: { title: string, icon: React.ReactNode, value: string | number, desc: string, loading: boolean, trend?: 'up' | 'down' }) => (
+        <div className="p-8 flex flex-col items-center justify-center min-h-[420px] rounded-2xl bg-white border border-slate-100 relative group overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
+                <div className="text-[120px]">{icon}</div>
+            </div>
+            
+            {loading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10"><Spin size="large" /></div>}
+            
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-3xl text-[#26428b] mb-6 shadow-sm">
+                {icon}
+            </div>
+            
+            <div className="text-center z-10">
+                <Text className="text-slate-400 font-medium uppercase tracking-wider text-xs mb-2 block">{title}</Text>
+                <div className="text-5xl font-bold mb-3 tracking-tight" style={{ color: '#0f172a' }}>{value}</div>
+                <div className="flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-100 inline-flex">
+                    {trend === 'up' ? <ArrowUpOutlined className="text-green-500 text-xs" /> : <ArrowDownOutlined className="text-red-500 text-xs" />}
+                    <Text className="text-slate-500 text-sm font-medium">{desc}</Text>
+                </div>
+            </div>
+
+            <div className="mt-12 w-full max-w-sm">
+                <div className="flex gap-2">
+                    <Select defaultValue="all" className="flex-1 custom-select" size="middle">
+                        <Option value="all">Global View</Option>
                         <Option value="eng">Engineering</Option>
                         <Option value="sales">Sales</Option>
+                        <Option value="ops">Operations</Option>
                     </Select>
-                    <Select defaultValue="ytd" className="w-32 bg-white" size="small">
-                        <Option value="ytd">Year to Date</Option>
+                    <Select defaultValue="ytd" className="w-32 custom-select" size="middle">
+                        <Option value="ytd">YTD</Option>
                         <Option value="q1">Q1</Option>
+                        <Option value="q2">Q2</Option>
                     </Select>
                 </div>
+                <p className="text-[10px] text-slate-400 text-center mt-4">Interactive charts are being generated from historical trends...</p>
             </div>
         </div>
     );
 
-    // Department breakdown columns
     const deptColumns = [
         {
             title: 'Department',
             dataIndex: 'department',
             key: 'department',
-            render: (text: string) => <span className="font-medium">{text || 'Unassigned'}</span>,
+            render: (text: string) => <span className="font-semibold text-slate-700">{text || 'Unassigned'}</span>,
         },
         {
-            title: 'Employees',
+            title: 'Headcount',
             dataIndex: 'employeeCount',
             key: 'employeeCount',
+            className: 'text-center',
         },
         {
-            title: 'Total CTC (Monthly)',
+            title: 'Total CTC (Month)',
             dataIndex: 'totalCtc',
             key: 'totalCtc',
-            render: (val: number) => <span className="font-mono">{formatCurrency(val)}</span>,
+            render: (val: number) => <span className="font-mono text-slate-600">{formatCurrency(val)}</span>,
         },
         {
-            title: 'Total In-Hand (Monthly)',
+            title: 'Net Payout',
             dataIndex: 'totalInHand',
             key: 'totalInHand',
-            render: (val: number) => <span className="font-mono text-green-700">{formatCurrency(val)}</span>,
+            render: (val: number) => <span className="font-mono text-green-600 font-medium">{formatCurrency(val)}</span>,
         },
         {
-            title: 'Avg CTC',
+            title: 'Avg. CTC',
             dataIndex: 'avgCtc',
             key: 'avgCtc',
-            render: (val: number) => <span className="font-mono text-slate-500">{formatCurrency(val)}</span>,
+            render: (val: number) => <span className="font-mono text-slate-400">{formatCurrency(val)}</span>,
         },
     ];
 
-    // Individual employee salary columns
     const empSalaryColumns = [
         {
-            title: 'Employee',
+            title: 'Employee Details',
             key: 'employee',
             render: (_: any, r: any) => (
-                <div>
-                    <div className="font-medium text-slate-800">{r.name}</div>
-                    <div className="text-xs text-slate-400 font-mono">{r.employeeCode}</div>
+                <div className="flex flex-col">
+                    <span className="font-semibold text-slate-800 leading-tight">{r.name}</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-tighter font-mono">{r.employeeCode}</span>
                 </div>
             ),
         },
@@ -134,167 +146,188 @@ export default function Reports() {
             title: 'Department',
             dataIndex: 'department',
             key: 'department',
-            render: (text: string) => text || '-',
-        },
-        {
-            title: 'Designation',
-            dataIndex: 'designation',
-            key: 'designation',
-            render: (text: string) => text || '-',
+            render: (text: string) => <Tag className="rounded-md border-none bg-slate-100 text-slate-600 font-medium">{text || '-'}</Tag>,
         },
         {
             title: 'CTC (Monthly)',
             dataIndex: 'ctc',
             key: 'ctc',
-            render: (val: number) => <span className="font-mono">{val ? formatCurrency(val) : '-'}</span>,
+            render: (val: number) => <span className="font-mono font-medium">{val ? formatCurrency(val) : '-'}</span>,
         },
         {
-            title: 'In-Hand (Monthly)',
+            title: 'In-Hand',
             dataIndex: 'inHandSalary',
             key: 'inHandSalary',
-            render: (val: number) => <span className="font-mono text-green-700">{val ? formatCurrency(val) : '-'}</span>,
+            render: (val: number) => <span className="font-mono text-green-600 font-bold">{val ? formatCurrency(val) : '-'}</span>,
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
             render: (s: string) => (
-                <Tag color={s === 'ACTIVE' ? 'success' : 'warning'} className="border-none">
+                <Tag color={s === 'ACTIVE' ? 'success' : 'default'} className="rounded-full px-2.5 border-none font-medium">
                     {s?.replace('_', ' ')}
                 </Tag>
             ),
         },
     ];
 
+    const tabItems = [
+        {
+            key: 'headcount',
+            label: 'Headcount',
+            children: (
+                <ReportPlaceholder
+                    title="Current Active Roster"
+                    value={headcountData?.total || 0}
+                    desc={`+${headcountData?.growth || 0}% Growth Year-over-Year`}
+                    icon={<BarChartOutlined />}
+                    loading={headercountLoading}
+                    trend="up"
+                />
+            )
+        },
+        {
+            key: 'attrition',
+            label: 'Attrition',
+            children: (
+                <ReportPlaceholder
+                    title="Annual Separation Rate"
+                    value={`${attritionData?.rate || 0}%`}
+                    desc={`${attritionData?.trend || 0}% Reduced since last Quarter`}
+                    icon={<LineChartOutlined />}
+                    loading={attritionLoading}
+                    trend="down"
+                />
+            )
+        },
+        {
+            key: 'leaves',
+            label: 'Utilization',
+            children: (
+                <ReportPlaceholder
+                    title="Average Annual Leave Load"
+                    value={`${leaveData?.avgTaken || 0} days`}
+                    desc="Steady utilization this Season"
+                    icon={<PieChartOutlined />}
+                    loading={leaveLoading}
+                    trend="up"
+                />
+            )
+        },
+        ...(isSuperAdmin ? [{
+            key: 'payroll',
+            label: (<span><DollarOutlined className="mr-1" />Payroll Analytics</span>),
+            children: (
+                <div className="flex flex-col gap-8 animate-fade-in py-2">
+                    {salaryLoading ? (
+                        <div className="flex justify-center py-24"><Spin size="large" /></div>
+                    ) : (
+                        <>
+                            <Row gutter={[16, 16]}>
+                                <Col xs={24} sm={12} lg={6}>
+                                    <div className="p-6 rounded-2xl bg-[#26428b]/[0.02] border border-[#26428b]/10">
+                                        <Statistic
+                                            title={<span className="text-slate-500 font-medium uppercase text-[10px] tracking-widest">Total Monthly CTC</span>}
+                                            value={formatCurrency(salaryMetrics?.totalCtc ?? 0)}
+                                            valueStyle={{ color: '#26428b', fontSize: '22px', fontWeight: 'bold' }}
+                                        />
+                                    </div>
+                                </Col>
+                                <Col xs={24} sm={12} lg={6}>
+                                    <div className="p-6 rounded-2xl bg-green-50/50 border border-green-100">
+                                        <Statistic
+                                            title={<span className="text-slate-500 font-medium uppercase text-[10px] tracking-widest">Net Cash Outflow</span>}
+                                            value={formatCurrency(salaryMetrics?.totalInHand ?? 0)}
+                                            valueStyle={{ color: '#059669', fontSize: '22px', fontWeight: 'bold' }}
+                                        />
+                                    </div>
+                                </Col>
+                                <Col xs={24} sm={12} lg={6}>
+                                    <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                                        <Statistic
+                                            title={<span className="text-slate-500 font-medium uppercase text-[10px] tracking-widest">Average CTC Buffer</span>}
+                                            value={formatCurrency(salaryMetrics?.avgCtc ?? 0)}
+                                            valueStyle={{ color: '#0f172a', fontSize: '22px', fontWeight: 'bold' }}
+                                        />
+                                    </div>
+                                </Col>
+                                <Col xs={24} sm={12} lg={6}>
+                                    <div className="p-6 rounded-2xl bg-amber-50/30 border border-amber-100">
+                                        <Statistic
+                                            title={<span className="text-slate-500 font-medium uppercase text-[10px] tracking-widest">Payroll Enrollment</span>}
+                                            value={salaryMetrics?.employeesWithSalary ?? 0}
+                                            suffix={<span className="text-sm text-slate-400 font-normal"> / {salaryMetrics?.totalEmployees ?? 0}</span>}
+                                            valueStyle={{ color: '#b45309', fontSize: '22px', fontWeight: 'bold' }}
+                                        />
+                                    </div>
+                                </Col>
+                            </Row>
+
+                            <div className="grid grid-cols-1 gap-8">
+                                <Card
+                                    title={<span className="flex items-center gap-2"><div className="w-1 h-4 bg-[#e00c05] rounded-full" />Department Performance</span>}
+                                    bordered={false}
+                                    className="rounded-2xl border border-slate-100 shadow-sm"
+                                    headStyle={{ borderBottom: '1px solid #f8fafc', padding: '16px 24px' }}
+                                >
+                                    <Table
+                                        columns={deptColumns}
+                                        dataSource={salaryMetrics?.byDepartment || []}
+                                        rowKey="department"
+                                        pagination={false}
+                                        size="middle"
+                                        className="custom-table"
+                                    />
+                                </Card>
+
+                                <Card
+                                    title={<span className="flex items-center gap-2"><div className="w-1 h-4 bg-[#26428b] rounded-full" />Detailed Salary Audit</span>}
+                                    bordered={false}
+                                    className="rounded-2xl border border-slate-100 shadow-sm"
+                                    headStyle={{ borderBottom: '1px solid #f8fafc', padding: '16px 24px' }}
+                                >
+                                    <Table
+                                        columns={empSalaryColumns}
+                                        dataSource={salaryMetrics?.employees || []}
+                                        rowKey="id"
+                                        pagination={{ pageSize: 8, size: 'small' }}
+                                        size="middle"
+                                        className="custom-table"
+                                    />
+                                </Card>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )
+        }] : [])
+    ];
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center sm:flex-row flex-col gap-4">
+        <div className="p-4 sm:p-8 space-y-8 animate-fade-in max-w-[1400px] mx-auto min-h-screen">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Title level={3} className="!mb-1">HR Reports &amp; Analytics</Title>
-                    <Text className="text-slate-500">Gain insights into workforce metrics and trends.</Text>
+                    <Title level={2} className="!mb-1 page-heading" style={{ color: '#26428b' }}>
+                        HR Reports & Analytics
+                    </Title>
+                    <Text className="text-slate-500 font-medium">Gain strategic insights into workforce productivity and payroll distribution.</Text>
                 </div>
             </div>
 
-            <Card bordered={false} className="shadow-sm p-2">
-                <Tabs defaultActiveKey="1" tabBarExtraContent={operations}>
-                    <Tabs.TabPane tab="Headcount" key="1">
-                        <ReportPlaceholder
-                            title="Active Headcount"
-                            value={headcountData?.total || 0}
-                            desc={`+${headcountData?.growth || 0}% vs Last Year`}
-                            icon={<BarChartOutlined />}
-                            loading={headercountLoading}
-                        />
-                    </Tabs.TabPane>
-                    <Tabs.TabPane tab="Attrition" key="2">
-                        <ReportPlaceholder
-                            title="Annual Attrition Rate"
-                            value={`${attritionData?.rate || 0}%`}
-                            desc={`${attritionData?.trend || 0}% vs Last Year`}
-                            icon={<LineChartOutlined />}
-                            loading={attritionLoading}
-                        />
-                    </Tabs.TabPane>
-                    <Tabs.TabPane tab="Leave Utilization" key="3">
-                        <ReportPlaceholder
-                            title="Avg Leaves Taken"
-                            value={`${leaveData?.avgTaken || 0} days`}
-                            desc="Per employee YTD"
-                            icon={<PieChartOutlined />}
-                            loading={leaveLoading}
-                        />
-                    </Tabs.TabPane>
-
-                    {/* Salary Metrics — SUPER_ADMIN only */}
-                    {isSuperAdmin && (
-                        <Tabs.TabPane tab={<span><DollarOutlined className="mr-1" />Salary Metrics</span>} key="5">
-                            {salaryLoading ? (
-                                <div className="flex justify-center py-16"><Spin size="large" /></div>
-                            ) : (
-                                <div className="flex flex-col gap-6 py-4">
-                                    {/* Summary Cards */}
-                                    <Row gutter={[16, 16]}>
-                                        <Col xs={24} sm={12} lg={6}>
-                                            <Card bordered={false} className="bg-slate-50 border border-slate-100">
-                                                <Statistic
-                                                    title={<span className="text-slate-500 text-sm">Total Monthly CTC</span>}
-                                                    value={formatCurrency(salaryMetrics?.totalCtc ?? 0)}
-                                                    valueStyle={{ color: '#0f172a', fontSize: '20px' }}
-                                                />
-                                            </Card>
-                                        </Col>
-                                        <Col xs={24} sm={12} lg={6}>
-                                            <Card bordered={false} className="bg-slate-50 border border-slate-100">
-                                                <Statistic
-                                                    title={<span className="text-slate-500 text-sm">Monthly In-Hand Payout</span>}
-                                                    value={formatCurrency(salaryMetrics?.totalInHand ?? 0)}
-                                                    valueStyle={{ color: '#16a34a', fontSize: '20px' }}
-                                                />
-                                            </Card>
-                                        </Col>
-                                        <Col xs={24} sm={12} lg={6}>
-                                            <Card bordered={false} className="bg-slate-50 border border-slate-100">
-                                                <Statistic
-                                                    title={<span className="text-slate-500 text-sm">Average CTC / Employee</span>}
-                                                    value={formatCurrency(salaryMetrics?.avgCtc ?? 0)}
-                                                    valueStyle={{ color: '#0f172a', fontSize: '20px' }}
-                                                />
-                                            </Card>
-                                        </Col>
-                                        <Col xs={24} sm={12} lg={6}>
-                                            <Card bordered={false} className="bg-slate-50 border border-slate-100">
-                                                <Statistic
-                                                    title={<span className="text-slate-500 text-sm">Employees with Salary</span>}
-                                                    value={salaryMetrics?.employeesWithSalary ?? 0}
-                                                    suffix={<span className="text-base text-slate-400">/ {salaryMetrics?.totalEmployees ?? 0}</span>}
-                                                    valueStyle={{ color: '#0f172a', fontSize: '20px' }}
-                                                />
-                                            </Card>
-                                        </Col>
-                                    </Row>
-
-                                    {/* Department Breakdown */}
-                                    {salaryMetrics?.byDepartment?.length > 0 && (
-                                        <Card
-                                            title="By Department"
-                                            bordered={false}
-                                            className="border border-slate-100"
-                                            headStyle={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px', fontWeight: 600 }}
-                                        >
-                                            <Table
-                                                columns={deptColumns}
-                                                dataSource={salaryMetrics.byDepartment}
-                                                rowKey="department"
-                                                pagination={false}
-                                                size="small"
-                                                className="custom-table"
-                                            />
-                                        </Card>
-                                    )}
-
-                                    {/* Individual Employee Salaries */}
-                                    {salaryMetrics?.employees?.length > 0 && (
-                                        <Card
-                                            title="Individual Salary Breakdown"
-                                            bordered={false}
-                                            className="border border-slate-100"
-                                            headStyle={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px', fontWeight: 600 }}
-                                        >
-                                            <Table
-                                                columns={empSalaryColumns}
-                                                dataSource={salaryMetrics.employees}
-                                                rowKey="id"
-                                                pagination={{ pageSize: 10, showSizeChanger: true }}
-                                                size="small"
-                                                className="custom-table"
-                                            />
-                                        </Card>
-                                    )}
-                                </div>
-                            )}
-                        </Tabs.TabPane>
-                    )}
-                </Tabs>
+            <Card 
+                className="shadow-xl border-slate-100 rounded-2xl overflow-hidden" 
+                style={{ borderRadius: '16px', boxShadow: '0 20px 50px -12px rgba(38, 66, 139, 0.08)' }}
+                bodyStyle={{ padding: '0px' }}
+            >
+                <Tabs 
+                    defaultActiveKey="headcount" 
+                    tabBarExtraContent={operations}
+                    items={tabItems}
+                    className="master-data-tabs"
+                    style={{ padding: '0 24px 24px 24px' }}
+                />
             </Card>
         </div>
     );

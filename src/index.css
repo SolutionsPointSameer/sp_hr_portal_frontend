@@ -1,7 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-brand-red: #E00C05;
+  --color-brand-red-light: #fef2f2;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-heading: "Outfit", system-ui, sans-serif;
+}
+
+/* Fix Tailwind CSS v4 Preflight overriding Ant Design buttons backgrounds */
+@layer base {
+  button,
+  [type='button'],
+  [type='reset'],
+  [type='submit'] {
+    background-color: unset;
+  }
 }
 
 html,
@@ -15,4 +29,305 @@ body,
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-sans);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   GLASSMORPHISM UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-slide-in {
+  animation: slideInLeft 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SIDEBAR / SIDER
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.app-sider {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar menu polish */
+.app-sider .ant-menu-inline .ant-menu-item {
+  margin: 2px 8px;
+  border-radius: 10px;
+  height: 42px;
+  line-height: 42px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.app-sider .ant-menu-inline .ant-menu-submenu-title {
+  margin: 2px 8px;
+  border-radius: 10px;
+  height: 42px;
+  line-height: 42px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.app-sider .ant-menu-inline .ant-menu-item:hover,
+.app-sider .ant-menu-inline .ant-menu-submenu-title:hover {
+  background: #f1f5f9;
+}
+.app-sider .ant-menu-inline .ant-menu-item-selected {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
+  box-shadow: 0 1px 3px rgba(224, 12, 5, 0.08);
+  font-weight: 600;
+}
+.app-sider .ant-menu-inline .ant-menu-item-selected::after {
+  display: none;
+}
+
+/* Sub-menu items */
+.app-sider .ant-menu-inline .ant-menu-sub .ant-menu-item {
+  height: 38px;
+  line-height: 38px;
+  margin: 1px 8px 1px 16px;
+  font-weight: 400;
+  font-size: 13px;
+  color: #64748b;
+}
+.app-sider .ant-menu-inline .ant-menu-sub .ant-menu-item-selected {
+  color: #E00C05;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ANT DESIGN COMPONENT OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Card elevations */
+.ant-card {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+/* Stat cards – subtle lift on hover */
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.08);
+}
+
+/* Table refinements */
+.custom-table .ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+.custom-table .ant-table-thead > tr > th {
+  background: #f8fafc;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+.custom-table .ant-table-tbody > tr {
+  transition: background 0.2s ease;
+}
+.custom-table .ant-table-tbody > tr:hover > td {
+  background: #fefce8 !important;
+}
+.custom-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Tabs refinements */
+.ant-tabs .ant-tabs-tab {
+  font-weight: 500;
+  font-size: 14px;
+  color: #64748b;
+  transition: color 0.2s ease;
+  padding: 10px 4px;
+}
+.ant-tabs .ant-tabs-tab:hover {
+  color: #0f172a;
+}
+.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #E00C05;
+  font-weight: 600;
+}
+.ant-tabs .ant-tabs-ink-bar {
+  background: #E00C05;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+/* Modal refinements */
+.ant-modal .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+.ant-modal .ant-modal-header {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Tag refinements */
+.ant-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* Input focus glow */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-picker-focused {
+  box-shadow: 0 0 0 3px rgba(224, 12, 5, 0.06);
+}
+
+/* Select dropdown */
+.ant-select-dropdown {
+  border-radius: 12px;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+/* Onboarding stepper spacing */
+.custom-steps.ant-steps {
+  align-items: flex-start;
+}
+
+.custom-steps.ant-steps .ant-steps-item {
+  min-width: 0;
+}
+
+.custom-steps.ant-steps .ant-steps-item-container {
+  align-items: center;
+}
+
+.custom-steps.ant-steps .ant-steps-item-icon {
+  margin-inline-end: 10px;
+}
+
+.custom-steps.ant-steps .ant-steps-item-title {
+  padding-inline-end: 0;
+  line-height: 1.2;
+}
+
+.custom-steps.ant-steps .ant-steps-item-content {
+  min-height: auto;
+}
+
+@media (max-width: 640px) {
+  .custom-steps.ant-steps .ant-steps-item-icon {
+    margin-inline-end: 8px;
+  }
+}
+
+/* Button shine effect for primary */
+.ant-btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+.ant-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+.ant-btn-primary:hover::after {
+  left: 100%;
+}
+
+/* Descriptions */
+.ant-descriptions .ant-descriptions-view {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ATTENDANCE CALENDAR
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.attendance-calendar .ant-picker-calendar-mini .ant-picker-calendar-header {
+  padding: 8px 12px;
+}
+.attendance-calendar .ant-picker-cell-in-view {
+  transition: background 0.15s ease;
+}
+.attendance-calendar .ant-picker-cell-in-view:hover {
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PAGE HEADING UTILITY
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.page-heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }

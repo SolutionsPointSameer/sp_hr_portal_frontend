@@ -18,10 +18,13 @@ const TeamLeaves = lazy(() => import('../pages/leave/TeamLeaves'));
 const PendingApprovals = lazy(() => import('../pages/leave/PendingApprovals'));
 const LeaveCalendar = lazy(() => import('../pages/leave/LeaveCalendar'));
 const Reports = lazy(() => import('../pages/reports/Reports'));
+const PayrollManagement = lazy(() => import('../pages/payroll/PayrollManagement'));
 const OrgChart = lazy(() => import('../pages/employees/OrgChart'));
 const UserManagement = lazy(() => import('../pages/admin/UserManagement'));
 const SystemSettings = lazy(() => import('../pages/admin/SystemSettings'));
 const MasterDataManagement = lazy(() => import('../pages/admin/MasterDataManagement'));
+const ManageHolidayCalendar = lazy(() => import('../pages/admin/ManageHolidayCalendar'));
+const ConfigureLeaveTypes = lazy(() => import('../pages/admin/ConfigureLeaveTypes'));
 
 // Forgot Password
 const ForgotPassword = lazy(() => import('../pages/forgotPassword/ForgotPassword'));
@@ -72,9 +75,9 @@ export const router = createBrowserRouter([
                     {
                         path: 'employees',
                         children: [
-                            { path: '', element: <RequireRole roles={['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeList /> }] },
+                            { path: '', element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeList /> }] },
                             { path: 'new', element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeForm /> }] },
-                            { path: 'org-chart', element: <OrgChart /> },
+                            { path: 'org-chart', element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <OrgChart /> }] },
                             { path: ':id', element: <EmployeeDetail /> },
                             { path: ':id/edit', element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />, children: [{ path: '', element: <EmployeeForm /> }] },
                         ]
@@ -116,10 +119,17 @@ export const router = createBrowserRouter([
                         children: [{ path: '', element: <Reports /> }]
                     },
                     {
+                        path: 'payroll',
+                        element: <RequireRole roles={['HR_ADMIN', 'SUPER_ADMIN']} />,
+                        children: [{ path: '', element: <PayrollManagement /> }]
+                    },
+                    {
                         path: 'admin',
                         element: <RequireRole roles={['SUPER_ADMIN']} />,
                         children: [
                             { path: 'master-data', element: <MasterDataManagement /> },
+                            { path: 'holidays', element: <ManageHolidayCalendar /> },
+                            { path: 'leave-types', element: <ConfigureLeaveTypes /> },
                             { path: 'users', element: <UserManagement /> },
                             { path: 'settings', element: <SystemSettings /> },
                         ]

@@ -14,12 +14,13 @@ export default function EmployeeList() {
     const user = useAuthStore(state => state.user);
     const [searchText, setSearchText] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
     // Fetch employees from API
     const { data: employeesData, isLoading } = useQuery({
-        queryKey: ['employees', currentPage, pageSize, searchText, statusFilter],
+        queryKey: ['employees', currentPage, pageSize, searchText, statusFilter, categoryFilter],
         queryFn: async () => {
             const params = new URLSearchParams({
                 page: currentPage.toString(),
@@ -27,6 +28,7 @@ export default function EmployeeList() {
             });
             if (searchText) params.append('search', searchText);
             if (statusFilter !== 'All') params.append('status', statusFilter);
+            if (categoryFilter !== 'All') params.append('employeeCategory', categoryFilter);
 
             const res = await apiClient.get(`/employees?${params.toString()}`);
             return res.data; // { data: [], meta: { total, ... } }
@@ -47,9 +49,23 @@ export default function EmployeeList() {
             render: (_: any, record: any) => `${record.firstName} ${record.lastName}`,
         },
         {
+            title: 'Category',
+            key: 'employeeCategory',
+            render: (_: any, record: any) => (
+                <Tag color={record.employeeCategory === 'DEPLOYED_MANPOWER' ? 'processing' : 'default'} className="border-none px-2 py-0.5 rounded-full">
+                    {record.employeeCategory === 'DEPLOYED_MANPOWER' ? 'Deployed Manpower' : 'Direct'}
+                </Tag>
+            ),
+        },
+        {
             title: 'Company',
             key: 'company',
             render: (_: any, record: any) => record.company?.name || '-',
+        },
+        {
+            title: 'Employment Type',
+            key: 'employmentType',
+            render: (_: any, record: any) => record.employmentType?.replaceAll('_', ' ') || '-',
         },
         {
             title: 'Location',
@@ -116,7 +132,7 @@ export default function EmployeeList() {
             </div>
 
             <Card bordered={false} className="shadow-sm">
-                <div className="mb-4 flex gap-4 md:w-1/2">
+                <div className="mb-4 flex gap-4 flex-wrap md:w-4/5">
                     <Input
                         placeholder="Search by Name or Code"
                         prefix={<SearchOutlined />}
@@ -139,6 +155,18 @@ export default function EmployeeList() {
                         <Option value="ACTIVE">Active</Option>
                         <Option value="ON_LEAVE">On Leave</Option>
                         <Option value="TERMINATED">Terminated</Option>
+                    </Select>
+                    <Select
+                        value={categoryFilter}
+                        onChange={val => {
+                            setCategoryFilter(val);
+                            setCurrentPage(1);
+                        }}
+                        className="w-52 bg-white"
+                    >
+                        <Option value="All">All Categories</Option>
+                        <Option value="DIRECT">Direct</Option>
+                        <Option value="DEPLOYED_MANPOWER">Deployed Manpower</Option>
                     </Select>
                 </div>
                 <Table

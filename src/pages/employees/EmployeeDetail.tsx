@@ -47,7 +47,8 @@ export default function EmployeeDetail() {
         { label: 'Phone', children: employee.phone || '-' },
         { label: 'Joining Date', children: joiningDateStr },
         { label: 'Status', children: <Tag color={employee.status === 'ACTIVE' ? 'success' : 'warning'}>{employee.status?.replace('_', ' ')}</Tag> },
-        { label: 'Type', children: employee.employmentType?.replace('_', ' ') || '-' },
+        { label: 'Employee Category', children: employee.employeeCategory === 'DEPLOYED_MANPOWER' ? 'Deployed Manpower' : 'Direct Employee' },
+        { label: 'Employment Type', children: employee.employmentType?.replace('_', ' ') || '-' },
     ];
 
     const workItems = [

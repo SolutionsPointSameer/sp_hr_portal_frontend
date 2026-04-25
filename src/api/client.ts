@@ -40,8 +40,8 @@ apiClient.interceptors.response.use(
                 if (!refreshToken) throw new Error('No refresh token available');
 
                 // Attempt to refresh token
-                const res = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh-token`, {
-                    token: refreshToken
+                const res = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, {
+                    refreshToken
                 });
 
                 const { accessToken } = res.data;

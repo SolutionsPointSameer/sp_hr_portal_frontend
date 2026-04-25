@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import { apiClient } from '../../api/client';
 
 const { Title, Text } = Typography;
+const { Search } = Input;
 
 const MONTHS = [
     { label: 'January', value: 1 }, { label: 'February', value: 2 }, { label: 'March', value: 3 },
@@ -52,11 +53,15 @@ export default function PayrollManagement() {
 
     const [salaryForm] = Form.useForm();
     const [runForm] = Form.useForm();
+    const [employeeSearch, setEmployeeSearch] = useState('');
+    const [employeePage, setEmployeePage] = useState(1);
 
     const { data: employeesData, isLoading: employeesLoading } = useQuery({
-        queryKey: ['employees', 'payroll-management'],
+        queryKey: ['employees', 'payroll-management', employeeSearch, employeePage],
         queryFn: async () => {
-            const res = await apiClient.get('/employees?limit=100');
+            const params = new URLSearchParams({ page: String(employeePage), limit: '20' });
+            if (employeeSearch) params.set('search', employeeSearch);
+            const res = await apiClient.get(`/employees?${params.toString()}`);
             return res.data;
         },
     });
@@ -369,13 +374,27 @@ export default function PayrollManagement() {
                 <div className="mb-5">
                     <Title level={4} className="!mb-1">Employee Salary Management</Title>
                     <Text className="text-slate-500">Maintain salary figures used in reporting and add salary structures used for payroll generation.</Text>
+                    <div className="mt-3">
+                        <Search
+                            placeholder="Search employees by name, code, or email"
+                            allowClear
+                            onSearch={(val) => { setEmployeeSearch(val); setEmployeePage(1); }}
+                            className="max-w-md"
+                        />
+                    </div>
                 </div>
                 <Table
                     columns={employeeColumns}
                     dataSource={employees}
                     rowKey="id"
                     loading={employeesLoading}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                        current: employeePage,
+                        pageSize: 20,
+                        total: employeesData?.total || 0,
+                        onChange: (page) => setEmployeePage(page),
+                        showSizeChanger: false,
+                    }}
                 />
             </Card>
         </div>

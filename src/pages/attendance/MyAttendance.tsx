@@ -33,6 +33,14 @@ export default function MyAttendance() {
         }
     });
 
+    const holidaysQuery = useQuery({
+        queryKey: ['holidays', dayjs().year()],
+        queryFn: async () => {
+            const res = await apiClient.get('/holidays', { params: { year: dayjs().year() } });
+            return res.data;
+        }
+    });
+
     // Check In Mutation — sends lat/lng if available
     const checkInMutation = useMutation({
         mutationFn: async () => {
@@ -133,17 +141,25 @@ export default function MyAttendance() {
     const dateCellRender = (value: dayjs.Dayjs) => {
         const dateStr = value.format('YYYY-MM-DD');
         const record = attendanceData?.find((r: any) => dayjs(r.date).format('YYYY-MM-DD') === dateStr);
-        if (record) {
-            return (
-                <div className="text-center text-xs mt-1">
-                    {record.status === 'present' && <div className="text-green-500 font-medium">Present</div>}
-                    {record.status === 'absent' && <div className="text-red-500 font-medium">Absent</div>}
-                    {record.status === 'on_leave' && <div className="text-blue-500 font-medium">Leave</div>}
-                    {record.status === 'late' && <div className="text-amber-500 font-medium">Late</div>}
-                </div>
-            );
-        }
-        return null;
+        
+        // Find holiday
+        const isHoliday = holidaysQuery.data?.find((h: any) => dayjs(h.date).format('YYYY-MM-DD') === dateStr);
+        
+        return (
+            <div className="text-center text-xs mt-1">
+                {record && (
+                    <>
+                        {record.status === 'present' && <div className="text-green-500 font-medium">Present</div>}
+                        {record.status === 'absent' && <div className="text-red-500 font-medium">Absent</div>}
+                        {record.status === 'on_leave' && <div className="text-blue-500 font-medium">Leave</div>}
+                        {record.status === 'late' && <div className="text-amber-500 font-medium">Late</div>}
+                    </>
+                )}
+                {!record && isHoliday && (
+                    <div className="text-purple-500 font-medium">{isHoliday.name}</div>
+                )}
+            </div>
+        );
     };
 
     return (

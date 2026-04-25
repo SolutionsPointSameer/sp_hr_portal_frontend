@@ -43,6 +43,14 @@ export default function LeaveCalendar() {
         enabled: isAdmin,
     });
 
+    const holidaysQuery = useQuery({
+        queryKey: ['holidays', dayjs().year()],
+        queryFn: async () => {
+            const res = await apiClient.get('/holidays', { params: { year: dayjs().year() } });
+            return res.data;
+        }
+    });
+
     const activeLeaves = viewMode === 'mine' ? myLeaves : teamLeaves;
     const isLoading = viewMode === 'mine' ? isLoadingMine : isLoadingTeam;
 
@@ -72,6 +80,7 @@ export default function LeaveCalendar() {
     const dateCellRender = (value: Dayjs) => {
         const key = value.format('YYYY-MM-DD');
         const items = leaveDateMap[key] || [];
+        const isHoliday = holidaysQuery.data?.find((h: any) => dayjs(h.date).format('YYYY-MM-DD') === key);
         return (
             <ul className="m-0 p-0 list-none">
                 {items.map((item, i) => (
@@ -82,6 +91,14 @@ export default function LeaveCalendar() {
                         />
                     </li>
                 ))}
+                {isHoliday && (
+                    <li className="text-xs truncate text-left mb-1">
+                        <Badge
+                            color="purple"
+                            text={<span className="text-purple-600 font-medium">{isHoliday.name}</span>}
+                        />
+                    </li>
+                )}
             </ul>
         );
     };
